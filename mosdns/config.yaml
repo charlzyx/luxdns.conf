@@ -65,23 +65,24 @@ plugins:
   - tag: forward_local
     type: forward
     args:
-      concurrent: 3
+      concurrent: 2
       upstreams:
         - addr: "https://dns.alidns.com/dns-query"
         - addr: "tls://dns.alidns.com"
-        - addr: "https://1.12.12.12/dns-query"
-        - addr: "https://120.53.53.53/dns-query"
+        #- addr: "https://1.12.12.12/dns-query"
+        #- addr: "https://120.53.53.53/dns-query"
 
   # 转发至远程服务器的插件
   - tag: forward_remote
     type: forward
     args:
-      concurrent: 3
+      concurrent: 2
       upstreams:
-        - addr: "https://cloudflare-dns.com/dns-query"
-        - addr: "tls://1dot1dot1dot1.cloudflare-dns.com"
-        - addr: "https://dns.google/dns-query"
-        - addr: "tls://dns.google"
+        - addr: 127.0.0.1:1053
+        # - addr: "https://cloudflare-dns.com/dns-query"
+        # - addr: "tls://1dot1dot1dot1.cloudflare-dns.com"
+        # - addr: "https://dns.google/dns-query"
+        # - addr: "tls://dns.google"
 
   - tag: "primary_forward"
     type: sequence
