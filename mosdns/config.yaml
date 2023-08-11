@@ -1,0 +1,173 @@
+log:
+  level: error # debug
+  # file: "./log/mosdns.log"      # 记录日志到文件。
+  production: true
+
+# API 入口设置
+api:
+  http: "0.0.0.0:9080" # 在该地址启动 api 接口。
+
+# 从其他配置文件载入 plugins 插件设置。
+# include 的插件会比本配置文件中的插件先初始化。
+include: []
+
+plugins:
+
+  - tag: "geosite-cn"
+    type: domain_set
+    args:
+      files:
+        - "./rule/direct-list.txt"
+        - "./rule/apple-cn.txt"
+        - "./rule/google-cn.txt"
+
+  - tag: "geosite-nocn"
+    type: domain_set
+    args:
+      files:
+        - "./rule/proxy-list.txt"
+        - "./rule/gfw.txt"
+
+  - tag: "geoip-cn"
+    type: ip_set
+    args:
+      files: "./rule/CN-ip-cidr.txt"
+
+  - tag: "fake-ip-clash"
+    type: ip_set
+    args:
+      files: "./rule/fake-ip-cidr.txt"
+
+  - tag: "force-cn"
+    type: domain_set
+    args:
+      files: "./rule/force-cn.txt"
+
+  - tag: "force-nocn"
+    type: domain_set
+    args:
+      files: "./rule/force-nocn.txt"
+
+  - tag: "hosts"
+    type: hosts
+    args:
+      files: "./rule/hosts.txt"
+
+  - tag: "cache"
+    type: "cache"
+    args:
+      size: 1024
+      lazy_cache_ttl: 0
+      dump_file: ./cache.dump
+      dump_interval: 600
+
+  # 转发至本地服务器的插件
+  - tag: forward_local
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "https://dns.alidns.com/dns-query"
+        - addr: "tls://dns.alidns.com"
+        - addr: "https://1.12.12.12/dns-query"
+        - addr: "https://120.53.53.53/dns-query"
+
+  # 转发至远程服务器的插件
+  - tag: forward_remote
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "https://cloudflare-dns.com/dns-query"
+        - addr: "tls://1dot1dot1dot1.cloudflare-dns.com"
+        - addr: "https://dns.google/dns-query"
+        - addr: "tls://dns.google"
+
+  - tag: "primary_forward"
+    type: sequence
+    args:
+      - exec: $forward_local
+      - exec: ttl 60-3600
+      - matches:
+          - "!resp_ip $geoip-cn"
+          - "has_resp"
+        exec: drop_resp
+
+  - tag: "secondary_forward"
+    type: sequence
+    args:
+      - exec: prefer_ipv4
+      - exec: $forward_remote
+      - matches:
+          - rcode 2
+        exec: $forward_local
+      - exec: ttl 300-3600
+
+  - tag: "final_forward"
+    type: fallback
+    args:
+      primary: primary_forward
+      secondary: secondary_forward
+      threshold: 150
+      always_standby: true
+
+  - tag: main_sequence
+    type: sequence
+    args:
+      - exec: $hosts
+      - exec: query_summary hosts
+      - matches: has_wanted_ans
+        exec: accept
+
+      - exec: $cache
+      - exec: query_summary cache
+      - matches: has_wanted_ans
+        exec: accept
+
+      - exec: query_summary qtype65
+      - matches:
+          - qtype 65
+        #         exec: black_hole 127.0.0.1 ::1 0.0.0.0
+        exec: reject 0
+
+      - matches:
+          - qname $geosite-cn
+        exec: $forward_local
+      - exec: query_summary geosite-cn
+      - matches: has_wanted_ans
+        exec: accept
+
+      - matches:
+          - qname $force-cn
+        exec: $forward_local
+      - exec: query_summary force-cn
+      - matches: has_wanted_ans
+        exec: accept
+
+      - matches:
+          - qname $geosite-nocn
+        exec: $forward_remote
+      - exec: query_summary geosite-nocn
+      - matches: has_wanted_ans
+        exec: accept
+
+      - matches:
+          - qname $force-nocn
+        exec: $forward_remote
+      - exec: query_summary force-nocn
+      - matches: has_wanted_ans
+        exec: accept
+
+      - exec: $final_forward
+
+  - tag: "udp_server"
+    type: "udp_server"
+    args:
+      entry: main_sequence
+      listen: 0.0.0.0:3053
+
+  - tag: "tcp_server"
+    type: "tcp_server"
+    args:
+      entry: main_sequence
+      listen: 0.0.0.0:3053
