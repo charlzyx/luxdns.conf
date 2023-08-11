@@ -4,8 +4,8 @@ http:
 users:
   - name: root
     password: $2a$10$tcAjZYmVhq6fRg.pmR3you42fJao3qrgetf9mCxGC8D/2VgHAwyLm
-auth_attempts: 5
-block_auth_min: 15
+auth_attempts: 10
+block_auth_min: 1
 http_proxy: ""
 language: zh-cn
 theme: auto
@@ -31,8 +31,7 @@ dns:
   upstream_dns_file: ""
   bootstrap_dns:
     - 223.6.6.6
-    - 9.9.9.10
-    - 149.112.112.10
+    - 9.9.9.9
     - 2620:fe::10
     - 2620:fe::fe:10
   all_servers: false
