@@ -46,9 +46,9 @@ dns:
   trusted_proxies:
     - 127.0.0.0/8
     - ::1/128
-  cache_size: 4194304
-  cache_ttl_min: 0
-  cache_ttl_max: 0
+  cache_size: 10240000
+  cache_ttl_min: 60
+  cache_ttl_max: 600
   cache_optimistic: true
   bogus_nxdomain: []
   aaaa_disabled: false
@@ -80,7 +80,7 @@ dns:
     youtube: true
   rewrites:
     - domain: '*.home.com'
-      answer: 119.119.119.120
+      answer: 192.168.6.6
   blocked_services:
     schedule:
       time_zone: Local
@@ -123,18 +123,22 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
     name: AdGuard DNS filter
     id: 1
-  - enabled: true
+  - enabled: false
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt
     name: AdAway Default Blocklist
     id: 2
-  - enabled: true
+  - enabled: false
     url: https://raw.githubusercontent.com/Cats-Team/AdRules/main/hosts.txt
     name: Cats-Team/AdRules/Hosts
     id: 1691654156
-  - enabled: true
+  - enabled: false
     url: https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_lite.txt
     name: AdRules AdBlock List Lite
     id: 1691654157
+  - enabled: true
+    url: https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-easylist.txt
+    name: anti-AD
+    id: 1691829090
 whitelist_filters: []
 user_rules: []
 dhcp:

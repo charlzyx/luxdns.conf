@@ -1,6 +1,6 @@
 log:
   level: error # debug
-  # file: "./log/mosdns.log"      # 记录日志到文件。
+  #file: "./log/mosdns.log"      # 记录日志到文件。
   production: true
 
 # API 入口设置
